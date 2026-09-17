@@ -1,6 +1,5 @@
 const EVENT_FEED = 'https://nach-dev.github.io/tcg-event-scraper/site/data/raven-forge-events.json';
 const LOCAL_EVENT_FEED = './data/raven-forge-events.json';
-const ALLOWED_GAMES = new Set(['Magic: The Gathering', 'Pokémon', 'Disney Lorcana', 'One Piece', 'Gundam Card Game']);
 const DAY_MS = 86400000;
 const list = document.querySelector('#event-list');
 const status = document.querySelector('#event-status');
@@ -8,7 +7,6 @@ const dayTabs = document.querySelector('#day-tabs');
 const weekLabel = document.querySelector('#week-label');
 let events = [];
 let weekOffset = 0;
-let selectedDay = null;
 
 function safeText(value) {
   return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[character]);
@@ -26,7 +24,7 @@ function flattenFeed(payload) {
   today.setHours(0,0,0,0);
   const seen = new Set();
   return (Array.isArray(payload?.events) ? payload.events : []).filter(event => {
-    if (!event.verified_store || !ALLOWED_GAMES.has(event.game_type) || !event.event_date) return false;
+    if (!event.verified_store || !event.game_type || !event.event_date) return false;
     if (/^(upcoming|event details)$/i.test(event.event_name || '')) return false;
     const date = localDate(event.event_date);
     const key = `${event.game_type}|${event.event_date}|${event.event_name}`.toLowerCase();
@@ -49,36 +47,40 @@ function renderWeek() {
   const start = days[0];
   const end = days[6];
   weekLabel.textContent = `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
-  const available = new Set(events.map(event => event.event_date));
   const todayIso = isoDate(new Date());
-  if (!selectedDay || !days.some(day => isoDate(day) === selectedDay)) {
-    selectedDay = days.some(day => isoDate(day) === todayIso) ? todayIso : null;
-    if (!selectedDay || !available.has(selectedDay)) selectedDay = days.map(isoDate).find(date => available.has(date)) || isoDate(days[0]);
-  }
   dayTabs.innerHTML = days.map(day => {
     const value = isoDate(day);
     const count = events.filter(event => event.event_date === value).length;
-    return `<button type="button" role="tab" data-date="${value}" class="${value === selectedDay ? 'active' : ''}" aria-selected="${value === selectedDay}">${day.toLocaleDateString('en-US',{weekday:'short'})}<small>${day.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small><small class="event-count">${count} event${count === 1 ? '' : 's'}</small></button>`;
+    return `<button type="button" data-date="${value}" class="${value === todayIso ? 'active' : ''}" aria-label="Jump to ${day.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}">${day.toLocaleDateString('en-US',{weekday:'short'})}<small>${day.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small><small class="event-count">${count} event${count === 1 ? '' : 's'}</small></button>`;
   }).join('');
-  dayTabs.querySelectorAll('button').forEach(button => button.addEventListener('click', () => { selectedDay = button.dataset.date; renderWeek(); }));
-  renderDay();
+  dayTabs.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
+    document.querySelector(`#day-${button.dataset.date}`)?.scrollIntoView({behavior:'smooth',block:'start'});
+  }));
+  renderWeekEvents(days);
 }
 
-function renderDay() {
-  const filtered = events.filter(event => event.event_date === selectedDay);
-  const selected = localDate(selectedDay);
-  status.textContent = `${filtered.length} event${filtered.length === 1 ? '' : 's'} on ${selected.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}.`;
-  if (!filtered.length) {
-    list.innerHTML = '<div class="empty-day">No events are currently scheduled for this day.</div>';
+function renderEvent(event) {
+  const time = event.event_time_display || 'Time TBD';
+  const description = event.location_text || 'Raven Forge Games · Sanford, NC';
+  const isCalendar = /calendar/i.test(event.source_site || '');
+  const linkLabel = isCalendar ? 'Event details ↗' : 'View / register ↗';
+  const link = event.source_url ? `<a class="event-source" href="${safeText(event.source_url)}" target="_blank" rel="noreferrer">${linkLabel}</a>` : '';
+  return `<article class="event-row"><div class="event-time">${safeText(time)}</div><div class="event-name"><b>${safeText(event.event_name)}</b><small>${safeText(description)}</small></div><div class="event-meta">${safeText(event.game_type)} · ${safeText(eventLabel(event))}</div>${link}</article>`;
+}
+
+function renderWeekEvents(days) {
+  const dates = new Set(days.map(isoDate));
+  const weekEvents = events.filter(event => dates.has(event.event_date));
+  status.textContent = `${weekEvents.length} event${weekEvents.length === 1 ? '' : 's'} scheduled this week.`;
+  if (!weekEvents.length) {
+    list.innerHTML = '<div class="empty-day">No events are currently scheduled for this week.</div>';
     return;
   }
-  list.innerHTML = filtered.map(event => {
-    const time = event.event_time_display || 'Time TBD';
-    const description = event.location_text || 'Raven Forge Games · Sanford, NC';
-    const isCalendar = /calendar/i.test(event.source_site || '');
-    const linkLabel = isCalendar ? 'Event details ↗' : 'View / register ↗';
-    const link = event.source_url ? `<a class="event-source" href="${safeText(event.source_url)}" target="_blank" rel="noreferrer">${linkLabel}</a>` : '';
-    return `<article class="event-row"><div class="event-time">${safeText(time)}</div><div class="event-name"><b>${safeText(event.event_name)}</b><small>${safeText(description)}</small></div><div class="event-meta">${safeText(event.game_type)} · ${safeText(eventLabel(event))}</div>${link}</article>`;
+  list.innerHTML = days.map(day => {
+    const value = isoDate(day);
+    const dayEvents = weekEvents.filter(event => event.event_date === value);
+    if (!dayEvents.length) return '';
+    return `<section class="day-group" id="day-${value}"><header class="day-heading"><span>${day.toLocaleDateString('en-US',{weekday:'long'})}</span><b>${day.toLocaleDateString('en-US',{month:'long',day:'numeric'})}</b><small>${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}</small></header>${dayEvents.map(renderEvent).join('')}</section>`;
   }).join('');
 }
 
@@ -95,8 +97,8 @@ async function loadEvents() {
   status.textContent = 'The Raven Forge event schedule is temporarily unavailable.';
 }
 
-document.querySelector('#previous-week').addEventListener('click', () => { weekOffset -= 1; selectedDay = null; renderWeek(); });
-document.querySelector('#next-week').addEventListener('click', () => { weekOffset += 1; selectedDay = null; renderWeek(); });
+document.querySelector('#previous-week').addEventListener('click', () => { weekOffset -= 1; renderWeek(); });
+document.querySelector('#next-week').addEventListener('click', () => { weekOffset += 1; renderWeek(); });
 const menu = document.querySelector('.menu');
 const nav = document.querySelector('#nav');
 menu.addEventListener('click', () => { const open = nav.classList.toggle('open'); menu.setAttribute('aria-expanded',open); });
