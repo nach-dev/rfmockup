@@ -1,0 +1,11 @@
+const events={
+  mon:[['6:00–9:00 PM','Ladies D&D','Private campaign · Contact Shauna_RFG on Discord','Private'],['7:00–9:00 PM','Modern Monday','$10 entry · Magic: The Gathering','Weekly'],['7:15–9:15 PM','Gundam TCG Weekly Battle','$5 entry · New players welcome','Weekly']],
+  tue:[['5:00–7:00 PM','Pokémon League','Free · Casual league play','All ages'],['6:00–9:00 PM','Lorcana Weekly Combat','$5 entry · Disney Lorcana','Weekly'],['7:15–9:15 PM','One Piece Weekly Brawl','$5 entry · One Piece Card Game','Weekly']],
+  wed:[['6:00–8:00 PM','D&D: Magic Week Play','$5 entry · Ongoing campaign','Campaign'],['6:30–9:30 PM','Riftbound Nexus Night','$5 entry · League of Legends TCG','Weekly']],
+  thu:[['6:00–9:00 PM','Community Board Game Night','Free · Happy Little Accidents featured','Open play'],['6:30–9:30 PM','Standard Showdown','$5 entry · Magic: The Gathering','Weekly'],['7:00–9:00 PM','Dice Throne: Learn to Play','Free · Demo copies provided','Beginner']]
+};
+const list=document.querySelector('#event-list');
+function render(day){list.innerHTML=events[day].map(e=>`<article class="event-row"><div class="event-time">${e[0]}</div><div class="event-name"><b>${e[1]}</b><small>${e[2]}</small></div><div class="event-meta">132 S. Steele St.</div><div class="event-level">${e[3]}</div></article>`).join('')}
+document.querySelectorAll('.day-tabs button').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.day-tabs button').forEach(b=>{b.classList.remove('active');b.setAttribute('aria-selected','false')});btn.classList.add('active');btn.setAttribute('aria-selected','true');render(btn.dataset.day)}));render('mon');
+const menu=document.querySelector('.menu'),nav=document.querySelector('#nav');menu.addEventListener('click',()=>{const open=nav.classList.toggle('open');menu.setAttribute('aria-expanded',open)});nav.querySelectorAll('a').forEach(a=>a.addEventListener('click',()=>{nav.classList.remove('open');menu.setAttribute('aria-expanded','false')}));
+document.querySelector('.newsletter form').addEventListener('submit',e=>{e.preventDefault();const button=e.currentTarget.querySelector('button');button.textContent='Thanks!';setTimeout(()=>button.textContent='Join →',1800)});
