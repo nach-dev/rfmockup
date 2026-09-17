@@ -7,6 +7,7 @@ const dayTabs = document.querySelector('#day-tabs');
 const weekLabel = document.querySelector('#week-label');
 let events = [];
 let weekOffset = 0;
+let selectedDay = null;
 
 function safeText(value) {
   return String(value ?? '').replace(/[&<>'"]/g, character => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[character]);
@@ -46,42 +47,39 @@ function renderWeek() {
   const days = weekDates();
   const start = days[0];
   const end = days[6];
-  weekLabel.textContent = `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} – ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+  weekLabel.textContent = `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} â€“ ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+  const available = new Set(events.map(event => event.event_date));
   const todayIso = isoDate(new Date());
+  if (!selectedDay || !days.some(day => isoDate(day) === selectedDay)) {
+    selectedDay = days.some(day => isoDate(day) === todayIso) ? todayIso : null;
+    if (!selectedDay || !available.has(selectedDay)) selectedDay = days.map(isoDate).find(date => available.has(date)) || isoDate(days[0]);
+  }
   dayTabs.innerHTML = days.map(day => {
     const value = isoDate(day);
     const count = events.filter(event => event.event_date === value).length;
-    return `<button type="button" data-date="${value}" class="${value === todayIso ? 'active' : ''}" aria-label="Jump to ${day.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}">${day.toLocaleDateString('en-US',{weekday:'short'})}<small>${day.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small><small class="event-count">${count} event${count === 1 ? '' : 's'}</small></button>`;
+    return `<button type="button" role="tab" data-date="${value}" class="${value === selectedDay ? 'active' : ''}" aria-selected="${value === selectedDay}">${day.toLocaleDateString('en-US',{weekday:'short'})}<small>${day.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</small><small class="event-count">${count} event${count === 1 ? '' : 's'}</small></button>`;
   }).join('');
-  dayTabs.querySelectorAll('button').forEach(button => button.addEventListener('click', () => {
-    document.querySelector(`#day-${button.dataset.date}`)?.scrollIntoView({behavior:'smooth',block:'start'});
-  }));
-  renderWeekEvents(days);
+  dayTabs.querySelectorAll('button').forEach(button => button.addEventListener('click', () => { selectedDay = button.dataset.date; renderWeek(); }));
+  renderDay();
 }
 
 function renderEvent(event) {
   const time = event.event_time_display || 'Time TBD';
-  const description = event.location_text || 'Raven Forge Games · Sanford, NC';
+  const description = event.location_text || 'Raven Forge Games Â· Sanford, NC';
   const isCalendar = /calendar/i.test(event.source_site || '');
-  const linkLabel = isCalendar ? 'Event details ↗' : 'View / register ↗';
-  const link = event.source_url ? `<a class="event-source" href="${safeText(event.source_url)}" target="_blank" rel="noreferrer">${linkLabel}</a>` : '';
-  return `<article class="event-row"><div class="event-time">${safeText(time)}</div><div class="event-name"><b>${safeText(event.event_name)}</b><small>${safeText(description)}</small></div><div class="event-meta">${safeText(event.game_type)} · ${safeText(eventLabel(event))}</div>${link}</article>`;
+  const link = event.source_url && !isCalendar ? `<a class="event-source" href="${safeText(event.source_url)}" target="_blank" rel="noreferrer">View / register â†—</a>` : '';
+  return `<article class="event-row"><div class="event-time">${safeText(time)}</div><div class="event-name"><b>${safeText(event.event_name)}</b><small>${safeText(description)}</small></div><div class="event-meta">${safeText(event.game_type)} Â· ${safeText(eventLabel(event))}</div>${link}</article>`;
 }
 
-function renderWeekEvents(days) {
-  const dates = new Set(days.map(isoDate));
-  const weekEvents = events.filter(event => dates.has(event.event_date));
-  status.textContent = `${weekEvents.length} event${weekEvents.length === 1 ? '' : 's'} scheduled this week.`;
-  if (!weekEvents.length) {
-    list.innerHTML = '<div class="empty-day">No events are currently scheduled for this week.</div>';
+function renderDay() {
+  const dayEvents = events.filter(event => event.event_date === selectedDay);
+  const selected = localDate(selectedDay);
+  status.textContent = `${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'} on ${selected.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}.`;
+  if (!dayEvents.length) {
+    list.innerHTML = '<div class="empty-day">No events are currently scheduled for this day.</div>';
     return;
   }
-  list.innerHTML = days.map(day => {
-    const value = isoDate(day);
-    const dayEvents = weekEvents.filter(event => event.event_date === value);
-    if (!dayEvents.length) return '';
-    return `<section class="day-group" id="day-${value}"><header class="day-heading"><span>${day.toLocaleDateString('en-US',{weekday:'long'})}</span><b>${day.toLocaleDateString('en-US',{month:'long',day:'numeric'})}</b><small>${dayEvents.length} event${dayEvents.length === 1 ? '' : 's'}</small></header>${dayEvents.map(renderEvent).join('')}</section>`;
-  }).join('');
+  list.innerHTML = dayEvents.map(renderEvent).join('');
 }
 
 async function loadEvents() {
@@ -97,8 +95,8 @@ async function loadEvents() {
   status.textContent = 'The Raven Forge event schedule is temporarily unavailable.';
 }
 
-document.querySelector('#previous-week').addEventListener('click', () => { weekOffset -= 1; renderWeek(); });
-document.querySelector('#next-week').addEventListener('click', () => { weekOffset += 1; renderWeek(); });
+document.querySelector('#previous-week').addEventListener('click', () => { weekOffset -= 1; selectedDay = null; renderWeek(); });
+document.querySelector('#next-week').addEventListener('click', () => { weekOffset += 1; selectedDay = null; renderWeek(); });
 const menu = document.querySelector('.menu');
 const nav = document.querySelector('#nav');
 menu.addEventListener('click', () => { const open = nav.classList.toggle('open'); menu.setAttribute('aria-expanded',open); });
@@ -107,7 +105,7 @@ document.querySelector('.newsletter form').addEventListener('submit', event => {
   event.preventDefault();
   const button = event.currentTarget.querySelector('button');
   button.textContent = 'Thanks!';
-  setTimeout(() => { button.textContent = 'Join →'; },1800);
+  setTimeout(() => { button.textContent = 'Join â†’'; },1800);
 });
 
 document.querySelector('#host-form').addEventListener('submit', event => {
@@ -116,7 +114,7 @@ document.querySelector('#host-form').addEventListener('submit', event => {
   const lines = [
     `Contact name: ${data.get('contact_name')}`, `Email: ${data.get('email')}`, `Phone: ${data.get('phone') || 'Not provided'}`, '',
     `Event name: ${data.get('event_name')}`, `Event / game type: ${data.get('game_type')}`, `Description: ${data.get('description')}`, '',
-    `Preferred date: ${data.get('preferred_date')}`, `Time: ${data.get('start_time')}–${data.get('end_time') || 'TBD'}`, `Expected players: ${data.get('players')}`,
+    `Preferred date: ${data.get('preferred_date')}`, `Time: ${data.get('start_time')}â€“${data.get('end_time') || 'TBD'}`, `Expected players: ${data.get('players')}`,
     `Recurrence: ${data.get('recurrence')}`, `Recurring details: ${data.get('recurrence_details') || 'None'}`, `Entry fee: ${data.get('entry_fee') || 'Not provided'}`, '',
     `Logistics / prizes / registration: ${data.get('logistics') || 'None provided'}`, '',
     'Acknowledgment accepted: Submission is not a confirmed reservation or event approval.'
