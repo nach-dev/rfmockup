@@ -10,7 +10,7 @@
   width: 220px;
   height: 220px;
   object-fit: cover;
-  object-position: center 42%;
+  object-position: center 30%;
 }
 
 @media (max-width: 1100px) {
