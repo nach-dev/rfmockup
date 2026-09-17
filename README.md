@@ -20,10 +20,10 @@ The Events section reads `site/data/raven-forge-events.json` from
 scraper's national release/event data: it accepts only listings verified for
 Raven Forge Games at 132 S. Steele St. in Sanford, NC.
 
-The Raven Forge Lorcana, Magic, and Pokémon store pages are connected. One Piece
-and Gundam remain visible as filters but show a safe empty state until a public,
-store-specific official source is connected. The site will never substitute
-national listings for local events.
+The Raven Forge Lorcana, Magic, and Pokémon store pages are connected. Raven
+Forge's existing public Google Calendar supplements those sources and supplies
+One Piece and Gundam events. The site never substitutes national listings for
+local events.
 
 ## Important before launch
 
