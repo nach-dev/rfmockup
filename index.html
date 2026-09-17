@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;0,900;1,800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="events.css">
 </head>
 <body>
   <header class="site-header">
@@ -40,15 +41,18 @@
     <section class="ticker" aria-label="Store highlights"><div>FUN <i>◆</i> RESPECT <i>◆</i> COMMUNITY <i>◆</i> PLAY YOUR WAY <i>◆</i> FUN <i>◆</i> RESPECT <i>◆</i> COMMUNITY</div></section>
 
     <section class="section events" id="events">
-      <div class="section-head"><div><p class="eyebrow">GATHER AT THE FORGE</p><h2>THIS WEEK'S EVENTS</h2></div><a class="text-link" href="#all-events">View full calendar →</a></div>
-      <div class="day-tabs" role="tablist" aria-label="Choose event day">
-        <button class="active" data-day="mon" role="tab" aria-selected="true"><small>SEP 14</small>MON</button>
-        <button data-day="tue" role="tab" aria-selected="false"><small>SEP 15</small>TUE</button>
-        <button data-day="wed" role="tab" aria-selected="false"><small>SEP 16</small>WED</button>
-        <button data-day="thu" role="tab" aria-selected="false"><small>SEP 17</small>THU</button>
+      <div class="section-head"><div><p class="eyebrow">VERIFIED FOR SANFORD, NC</p><h2>EVENTS AT RAVEN FORGE</h2></div><a class="text-link" href="https://tcg.ravensburgerplay.com/stores/d9a4caf9-daf1-43d2-8c26-83879cccd8a9" target="_blank" rel="noreferrer">Official Lorcana page ↗</a></div>
+      <div class="game-tabs" role="tablist" aria-label="Filter events by game">
+        <button class="active" data-game="all" role="tab" aria-selected="true">All games</button>
+        <button data-game="Magic: The Gathering" role="tab" aria-selected="false">Magic</button>
+        <button data-game="Pokémon" role="tab" aria-selected="false">Pokémon</button>
+        <button data-game="Disney Lorcana" role="tab" aria-selected="false">Lorcana</button>
+        <button data-game="One Piece" role="tab" aria-selected="false">One Piece</button>
+        <button data-game="Gundam Card Game" role="tab" aria-selected="false">Gundam</button>
       </div>
+      <div class="event-status" id="event-status" role="status">Loading official event listings…</div>
       <div class="event-list" id="event-list"></div>
-      <div class="events-note"><b>New here?</b> Walk-ins are welcome. Ask our team how to join, what to bring, or which event is beginner-friendly.</div>
+      <div class="events-note"><b>Store-only feed:</b> Events appear here only when an official source identifies Raven Forge Games at 132 S. Steele St., Sanford, NC. National events and release dates are excluded.</div>
     </section>
 
     <section class="section games" id="games">
