@@ -47,7 +47,7 @@ function renderWeek() {
   const days = weekDates();
   const start = days[0];
   const end = days[6];
-  weekLabel.textContent = `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} â€“ ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
+  weekLabel.textContent = `${start.toLocaleDateString('en-US',{month:'short',day:'numeric'})} - ${end.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`;
   const available = new Set(events.map(event => event.event_date));
   const todayIso = isoDate(new Date());
   if (!selectedDay || !days.some(day => isoDate(day) === selectedDay)) {
@@ -65,10 +65,10 @@ function renderWeek() {
 
 function renderEvent(event) {
   const time = event.event_time_display || 'Time TBD';
-  const description = event.location_text || 'Raven Forge Games Â· Sanford, NC';
+  const description = event.location_text || 'Raven Forge Games - Sanford, NC';
   const isCalendar = /calendar/i.test(event.source_site || '');
-  const link = event.source_url && !isCalendar ? `<a class="event-source" href="${safeText(event.source_url)}" target="_blank" rel="noreferrer">View / register â†—</a>` : '';
-  return `<article class="event-row"><div class="event-time">${safeText(time)}</div><div class="event-name"><b>${safeText(event.event_name)}</b><small>${safeText(description)}</small></div><div class="event-meta">${safeText(event.game_type)} Â· ${safeText(eventLabel(event))}</div>${link}</article>`;
+  const link = event.source_url && !isCalendar ? `<a class="event-source" href="${safeText(event.source_url)}" target="_blank" rel="noreferrer">View / register &rarr;</a>` : '';
+  return `<article class="event-row${link ? '' : ' no-link'}"><div class="event-time">${safeText(time)}</div><div class="event-name"><b>${safeText(event.event_name || 'Raven Forge event')}</b><small>${safeText(description)}</small></div><div class="event-meta">${safeText(event.game_type)} / ${safeText(eventLabel(event))}</div>${link}</article>`;
 }
 
 function renderDay() {
@@ -105,7 +105,7 @@ document.querySelector('.newsletter form').addEventListener('submit', event => {
   event.preventDefault();
   const button = event.currentTarget.querySelector('button');
   button.textContent = 'Thanks!';
-  setTimeout(() => { button.textContent = 'Join â†’'; },1800);
+  setTimeout(() => { button.textContent = 'Join →'; },1800);
 });
 
 document.querySelector('#host-form').addEventListener('submit', event => {
@@ -114,7 +114,7 @@ document.querySelector('#host-form').addEventListener('submit', event => {
   const lines = [
     `Contact name: ${data.get('contact_name')}`, `Email: ${data.get('email')}`, `Phone: ${data.get('phone') || 'Not provided'}`, '',
     `Event name: ${data.get('event_name')}`, `Event / game type: ${data.get('game_type')}`, `Description: ${data.get('description')}`, '',
-    `Preferred date: ${data.get('preferred_date')}`, `Time: ${data.get('start_time')}â€“${data.get('end_time') || 'TBD'}`, `Expected players: ${data.get('players')}`,
+    `Preferred date: ${data.get('preferred_date')}`, `Time: ${data.get('start_time')}–${data.get('end_time') || 'TBD'}`, `Expected players: ${data.get('players')}`,
     `Recurrence: ${data.get('recurrence')}`, `Recurring details: ${data.get('recurrence_details') || 'None'}`, `Entry fee: ${data.get('entry_fee') || 'Not provided'}`, '',
     `Logistics / prizes / registration: ${data.get('logistics') || 'None provided'}`, '',
     'Acknowledgment accepted: Submission is not a confirmed reservation or event approval.'
